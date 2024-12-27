@@ -11,21 +11,20 @@ const MovieGrid = ({ movies, status }) => {
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-
       {movies.map((movie) => (
         <div
-          className="bg-gray-800 rounded-lg overflow-hidden shadow-lg flex flex-col items-center"
+          className="bg-[#243642] text-[#D3F1DF] rounded-lg overflow-hidden shadow-lg flex flex-col items-center"
           key={movie.imdbID}
         >
           <img
-    src={movie.Poster !== "N/A" ? movie.Poster : "https://via.placeholder.com/300"}
-    alt={movie.Title}
-    className="w-full h-64 object-cover"
-  />
+            src={movie.Poster !== "N/A" ? movie.Poster : "https://via.placeholder.com/300"}
+            alt={movie.Title}
+            className="w-full h-64 object-cover"
+          />
           <div className="p-4 text-center flex-grow">
-    <h3 className="text-lg font-bold">{movie.Title}</h3>
-    <p className="text-sm text-gray-400">{movie.Year}</p>
-  </div>
+            <h3 className="text-lg font-bold">{movie.Title}</h3>
+            <p className="text-sm">{movie.Year}</p>
+          </div>
         </div>
       ))}
     </div>

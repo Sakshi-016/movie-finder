@@ -48,7 +48,7 @@ const App = () => {
   };
 
   return (
-    <div>
+    <div className="min-h-screen bg-[#243642] text-[#D3F1DF]">
       <HomePage fetchMovies={fetchMovies} />
       <div className="container mx-auto px-4 py-6">
         <MovieGrid movies={movies} status={status} />
