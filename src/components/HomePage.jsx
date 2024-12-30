@@ -13,3 +13,4 @@ const HomePage = ({ fetchMovies }) => {
 };
 
 export default HomePage;
+

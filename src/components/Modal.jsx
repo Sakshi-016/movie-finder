@@ -1,20 +1,23 @@
-// Modal.jsx (inside your Modal component)
 import React, { useState, useEffect } from 'react';
-import './style.css'
+import axios from 'axios'; // Importing Axios
+import './style.css';
+
 const Modal = ({ isOpen, onClose, movie }) => {
   const [movieDetails, setMovieDetails] = useState(null);
+
   const fetchMovieDetails = async (imdbID) => {
-    const response = await fetch(`https://www.omdbapi.com/?i=${imdbID}&apikey=ab7585e4`);
-    const data = await response.json();
+    const response = await axios.get(`https://www.omdbapi.com/?i=${imdbID}&apikey=ab7585e4`);
+    const data = response.data;
+
     if (data.Response === 'True') {
       return data;
     } else {
       return null;
     }
   };
+
   useEffect(() => {
     if (isOpen && movie) {
-      // Fetch the full movie details if the modal is open and movie is provided
       const fetchDetails = async () => {
         const details = await fetchMovieDetails(movie.imdbID);
         setMovieDetails(details);
@@ -36,7 +39,7 @@ const Modal = ({ isOpen, onClose, movie }) => {
         </button>
         {movieDetails ? (
           <div>
-            <h2 className="text-2xl  oldenburg-regular mb-4">{movieDetails.Title}</h2>
+            <h2 className="text-2xl oldenburg-regular mb-4">{movieDetails.Title}</h2>
             <img
               src={movieDetails.Poster !== 'N/A' ? movieDetails.Poster : 'https://via.placeholder.com/300'}
               alt={movieDetails.Title}
