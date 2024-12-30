@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import HomePage from './components/HomePage';
 import MovieGrid from './components/MovieGrid';
@@ -7,34 +7,24 @@ import SortFilter from './components/SortFilter';  // Import SortFilter componen
 const App = () => {
   const [movies, setMovies] = useState([]);
   const [status, setStatus] = useState('idle');
-  const [initialLoad, setInitialLoad] = useState(true);
+  const [page, setPage] = useState(1);  // Track the current page
   const [sortOrder, setSortOrder] = useState('asc');
   const [filterDecade, setFilterDecade] = useState('');
 
   const popularQueries = ['action', 'comedy', 'drama', 'horror', 'romance', 'thriller', 'adventure', 'animation'];
 
-  const fetchMovies = async (query, page = 1, loadAll = false) => {
+  const fetchMovies = async (query, page = 1) => {
     setStatus('loading');
     try {
-      let allMovies = [];
-      let currentPage = page;
-      let hasMorePages = true;
+      const response = await axios.get(`https://www.omdbapi.com/?s=${query}&page=${page}&apikey=ab7585e4`);
+      const data = response.data;
 
-      while (hasMorePages) {
-        const response = await axios.get(`https://www.omdbapi.com/?s=${query}&page=${currentPage}&apikey=ab7585e4`);
-        const data = response.data;
-
-        if (data.Response === 'True') {
-          allMovies = [...allMovies, ...data.Search];
-          hasMorePages = data.Search.length > 0 && (!loadAll ? allMovies.length < 20 : true);
-          currentPage++;
-        } else {
-          hasMorePages = false;
-        }
+      if (data.Response === 'True') {
+        setMovies((prevMovies) => [...prevMovies, ...data.Search]);  // Append new movies to existing list
+        setStatus('succeeded');
+      } else {
+        setStatus('failed');
       }
-
-      setMovies(allMovies);
-      setStatus('succeeded');
     } catch (error) {
       setStatus('failed');
       console.error(error);
@@ -42,7 +32,9 @@ const App = () => {
   };
 
   const handleSearch = (query) => {
-    fetchMovies(query, 1, true);
+    setMovies([]);  // Reset movie list on new search
+    setPage(1);  // Reset page count
+    fetchMovies(query, 1);
   };
 
   const handleSortChange = (order) => {
@@ -69,20 +61,68 @@ const App = () => {
     return year >= startYear && year <= endYear;
   });
 
-  useEffect(() => {
-    if (initialLoad) {
+  const loadMoreMovies = useCallback(() => {
+    setPage((prevPage) => {
+      const newPage = prevPage + 1;
       const randomQuery = popularQueries[Math.floor(Math.random() * popularQueries.length)];
-      fetchMovies(randomQuery, 1, false);
-      setInitialLoad(false);
+      fetchMovies(randomQuery, newPage);
+      return newPage;
+    });
+  }, []);
+
+  const handleScroll = (event) => {
+    const bottom = event.target.scrollHeight === event.target.scrollTop + event.target.clientHeight;
+    if (bottom && status !== 'loading') {
+      loadMoreMovies();
     }
-  }, [initialLoad]);
+  };
+
+  const handleNextPage = () => {
+    const nextPage = page + 1;
+    setPage(nextPage);
+    const randomQuery = popularQueries[Math.floor(Math.random() * popularQueries.length)];
+    fetchMovies(randomQuery, nextPage);
+  };
+
+  const handlePreviousPage = () => {
+    if (page > 1) {
+      const prevPage = page - 1;
+      setPage(prevPage);
+      const randomQuery = popularQueries[Math.floor(Math.random() * popularQueries.length)];
+      fetchMovies(randomQuery, prevPage);
+    }
+  };
+
+  useEffect(() => {
+    if (movies.length === 0) {
+      const randomQuery = popularQueries[Math.floor(Math.random() * popularQueries.length)];
+      fetchMovies(randomQuery, 1);
+    }
+  }, [movies]);
 
   return (
-    <div className="min-h-screen bg-[#243642] text-[#D3F1DF]">
+    <div className="min-h-screen bg-[#243642] text-[#D3F1DF]" onScroll={handleScroll}>
       <HomePage fetchMovies={handleSearch} />
       <SortFilter onSortChange={handleSortChange} onFilterChange={handleFilterChange} />
       <div className="container mx-auto px-4 py-6">
         <MovieGrid movies={filteredMovies} status={status} />
+      </div>
+
+      {/* Pagination Buttons */}
+      <div className="flex justify-center gap-4 py-4">
+        <button
+          onClick={handlePreviousPage}
+          className="bg-blue-500 text-white px-4 py-2 rounded disabled:opacity-50"
+          disabled={page === 1}
+        >
+          Previous
+        </button>
+        <button
+          onClick={handleNextPage}
+          className="bg-blue-500 text-white px-4 py-2 rounded"
+        >
+          Next
+        </button>
       </div>
     </div>
   );
