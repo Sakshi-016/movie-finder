@@ -1,29 +1,32 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios'; // Importing Axios
+import axios from 'axios';
 import './style.css';
 
 const Modal = ({ isOpen, onClose, movie }) => {
   const [movieDetails, setMovieDetails] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   const fetchMovieDetails = async (imdbID) => {
-    const response = await axios.get(`https://www.omdbapi.com/?i=${imdbID}&apikey=ab7585e4`);
-    const data = response.data;
-
-    if (data.Response === 'True') {
-      return data;
-    } else {
+    try {
+      const response = await axios.get(`https://www.omdbapi.com/?i=${imdbID}&apikey=ab7585e4`);
+      const data = response.data;
+      return data.Response === 'True' ? data : null;
+    } catch (error) {
+      console.error('Error fetching movie details:', error);
       return null;
     }
   };
 
   useEffect(() => {
-    if (isOpen && movie) {
-      const fetchDetails = async () => {
+    const fetchDetails = async () => {
+      if (isOpen && movie) {
+        setLoading(true);
         const details = await fetchMovieDetails(movie.imdbID);
         setMovieDetails(details);
-      };
-      fetchDetails();
-    }
+        setLoading(false);
+      }
+    };
+    fetchDetails();
   }, [isOpen, movie]);
 
   if (!isOpen) return null;
@@ -37,7 +40,9 @@ const Modal = ({ isOpen, onClose, movie }) => {
         >
           &times;
         </button>
-        {movieDetails ? (
+        {loading ? (
+          <p>Loading details...</p>
+        ) : movieDetails ? (
           <div>
             <h2 className="text-2xl oldenburg-regular mb-4">{movieDetails.Title}</h2>
             <img
@@ -46,11 +51,11 @@ const Modal = ({ isOpen, onClose, movie }) => {
               className="h-64 justify-center align-middle items-center object-cover mb-4 rounded"
             />
             <p className='tinos-regular'><strong className=' tinos-bold'>Genre:</strong> {movieDetails.Genre || 'N/A'}</p>
-            <p className='tinos-regular'><strong className=' tinos-bold' >Director:</strong> {movieDetails.Director || 'N/A'}</p>
+            <p className='tinos-regular'><strong className=' tinos-bold'>Director:</strong> {movieDetails.Director || 'N/A'}</p>
             <p className='tinos-regular'><strong className=' tinos-bold'>Plot:</strong> {movieDetails.Plot || 'N/A'}</p>
           </div>
         ) : (
-          <p>Loading details...</p>
+          <p>Unable to fetch movie details.</p>
         )}
       </div>
     </div>
